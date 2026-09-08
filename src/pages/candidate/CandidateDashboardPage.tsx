@@ -10,6 +10,16 @@ import { useEffect, useState } from 'react'
 import { realtimeService } from '../../services/realtimeService'
 
 export function CandidateDashboardPage() {
+  const quickActionRoutes: Record<string, string> = {
+    'View Application': '/candidate/application/view',
+    'Edit Application': '/candidate/application/edit',
+    Documents: '/candidate/documents',
+    Payment: '/candidate/payment',
+    'Application Receipt': '/candidate/payment/history',
+    Cancellation: '/candidate/cancellation',
+    'Hall Ticket': '/candidate/hall-ticket',
+  }
+
   const [candidate, setCandidate] = useState<any>(() => {
     try { return JSON.parse(localStorage.getItem('candidate_auth') || '{}') } catch { return {} }
   })
@@ -152,15 +162,21 @@ export function CandidateDashboardPage() {
               </div>
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {quickActions.map((action) => (
-                  <Card key={action} className="p-4 transition hover:-translate-y-0.5 hover:shadow-soft">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
-                        {action.includes('Document') || action === 'Documents' ? <FileText className="h-5 w-5" /> : action.includes('Payment') ? <Wallet className="h-5 w-5" /> : action.includes('Receipt') ? <ReceiptText className="h-5 w-5" /> : action.includes('Hall') ? <ShieldCheck className="h-5 w-5" /> : <ArrowRight className="h-5 w-5" />}
-                      </span>
-                      <ArrowRight className="h-4 w-4 text-slate-400" />
-                    </div>
-                    <p className="mt-4 text-base font-semibold text-slate-900">{action}</p>
-                  </Card>
+                  <Link
+                    key={action}
+                    to={quickActionRoutes[action] ?? '/candidate/dashboard'}
+                    className="rounded-2xl focus:outline-none focus:ring-4 focus:ring-primary-100"
+                  >
+                    <Card className="h-full p-4 transition hover:-translate-y-0.5 hover:shadow-soft">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-700">
+                          {action.includes('Document') || action === 'Documents' ? <FileText className="h-5 w-5" /> : action.includes('Payment') ? <Wallet className="h-5 w-5" /> : action.includes('Receipt') ? <ReceiptText className="h-5 w-5" /> : action.includes('Hall') ? <ShieldCheck className="h-5 w-5" /> : <ArrowRight className="h-5 w-5" />}
+                        </span>
+                        <ArrowRight className="h-4 w-4 text-slate-400" />
+                      </div>
+                      <p className="mt-4 text-base font-semibold text-slate-900">{action}</p>
+                    </Card>
+                  </Link>
                 ))}
               </div>
             </section>
