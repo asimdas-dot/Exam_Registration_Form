@@ -1,7 +1,7 @@
 // Simple Express server to manage candidates in MongoDB
-const express = require('express')
-const { MongoClient } = require('mongodb')
-const bodyParser = require('body-parser')
+import express from 'express'
+import { MongoClient } from 'mongodb'
+import bodyParser from 'body-parser'
 
 const app = express()
 app.use(bodyParser.json())
