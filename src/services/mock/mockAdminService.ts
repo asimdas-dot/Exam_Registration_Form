@@ -52,6 +52,28 @@ export const mockAdminService = {
   getCandidates: () => candidates.slice(),
   getApplicationById: (id: string) => applications.find((a) => a.applicationNumber === id) || null,
   getCandidateByApp: (id: string) => candidates.find((c) => c.applicationNumber === id) || null,
+  syncApplicationsFromCandidates: (records: any[]) => {
+    const synced = records
+      .filter((candidate) => candidate?.applicationNumber)
+      .map((candidate) => {
+        const existing = applications.find((application) => application.applicationNumber === candidate.applicationNumber)
+        return {
+          ...existing,
+          applicationNumber: candidate.applicationNumber,
+          candidateName: candidate.name || candidate.personal?.fullName || 'Unnamed candidate',
+          exam: candidate.exam?.name || candidate.exam?.examName || existing?.exam || 'Not selected',
+          paymentStatus: candidate.paymentStatus || existing?.paymentStatus || 'Pending',
+          documentStatus: candidate.documentStatus || existing?.documentStatus || 'Pending',
+          status: candidate.status || existing?.status || 'SUBMITTED',
+          submittedAt: candidate.updatedAt || candidate.registrationDate || candidate.createdAt || existing?.submittedAt || '',
+        }
+      })
+    applications = synced
+    candidates = records
+    persist()
+    listeners.forEach((listener) => listener())
+    return applications.slice()
+  },
   updateApplicationStatus: (id: string, status: string, adminRemark?: string, by = 'admin') => {
     const idx = applications.findIndex((a) => a.applicationNumber === id)
     if (idx === -1) return false

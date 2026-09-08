@@ -16,6 +16,18 @@ export const AdminApplicationsPage: React.FC = () => {
 
   useEffect(() => {
     setItems(mockAdminService.getApplications())
+    const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:4000'
+    fetch(`${apiBase}/api/candidates`)
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        return response.json()
+      })
+      .then((records) => {
+        if (Array.isArray(records)) setItems(mockAdminService.syncApplicationsFromCandidates(records))
+      })
+      .catch((error) => {
+        console.warn('Unable to load applications from backend candidates', error)
+      })
     const unsub = mockAdminService.subscribe(() => setItems(mockAdminService.getApplications()))
     return () => unsub()
   }, [])
