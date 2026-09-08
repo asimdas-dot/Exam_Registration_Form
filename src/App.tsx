@@ -35,7 +35,7 @@ import { RequireAdmin } from './components/admin/RequireAdmin'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Suspense fallback={<div className="p-6">Loading...</div>}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
