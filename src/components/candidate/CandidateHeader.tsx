@@ -1,7 +1,15 @@
 import { Bell, LogOut, Search, UserCircle2 } from 'lucide-react'
 import { Button } from '../common/Button'
+import { useNavigate } from 'react-router-dom'
 
 export function CandidateHeader() {
+  const navigate = useNavigate()
+  const logout = () => {
+    localStorage.removeItem('candidate_auth')
+    localStorage.removeItem('candidate_application_draft')
+    navigate('/login')
+  }
+
   return (
     <header role="banner" className="border-b border-slate-200 bg-white">
       <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -31,7 +39,7 @@ export function CandidateHeader() {
           <button type="button" className="hidden h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 md:inline-flex" aria-label="Notifications">
             <Bell className="h-4 w-4" />
           </button>
-          <Button variant="outline" size="sm" icon={<LogOut className="h-4 w-4" />} aria-label="Logout">Logout</Button>
+          <Button variant="outline" size="sm" icon={<LogOut className="h-4 w-4" />} aria-label="Logout" onClick={logout}>Logout</Button>
         </div>
       </div>
     </header>

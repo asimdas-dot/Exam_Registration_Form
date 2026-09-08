@@ -94,6 +94,31 @@ export const AdminApplicationsPage: React.FC = () => {
                 <option value="APPROVED">APPROVED</option>
                 <option value="REJECTED">REJECTED</option>
               </select>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm('Clear all applications? This action cannot be undone.')) return
+                  try {
+                    const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:4000'
+                    const response = await fetch(`${apiBase}/api/applications`, { method: 'DELETE' })
+                    if (!response.ok && response.status !== 404) {
+                      const result = await response.json()
+                      throw new Error(result.error || `HTTP ${response.status}`)
+                    }
+                  } catch (error) {
+                    console.warn('Application collection clear unavailable; clearing local application state.', error)
+                  }
+                  mockAdminService.clearApplications()
+                  setSelected([])
+                  setSelectAll(false)
+                  setPage(1)
+                  setToast('All applications cleared')
+                  setTimeout(() => setToast(null), 3000)
+                }}
+                className="rounded bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+              >
+                Clear all applications
+              </button>
             </div>
           </div>
 

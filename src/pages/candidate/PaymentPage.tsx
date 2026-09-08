@@ -8,7 +8,14 @@ import { CandidateSidebar } from '../../components/candidate/CandidateSidebar'
 import { getSummary, addTransaction } from '../../services/mock/mockPaymentService'
 
 export function PaymentPage() {
-  const summary = getSummary()
+  const defaultSummary = getSummary()
+  let applicationNumber = defaultSummary.applicationNumber
+  try {
+    applicationNumber = JSON.parse(localStorage.getItem('candidate_auth') || '{}').applicationNumber || applicationNumber
+  } catch {
+    // Use the payment summary fallback when no candidate session is available.
+  }
+  const summary = { ...defaultSummary, applicationNumber }
   const [method, setMethod] = useState<'UPI' | 'Debit Card' | 'Credit Card' | 'Net Banking'>('UPI')
   const [processing, setProcessing] = useState(false)
   const navigate = useNavigate()

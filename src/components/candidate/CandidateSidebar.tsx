@@ -1,5 +1,6 @@
 import { BellDot, CreditCard, FileText, LayoutDashboard, LogOut, ReceiptText, ShieldCheck, UserRound } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 const navItems = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/candidate/dashboard' },
@@ -11,6 +12,13 @@ const navItems = [
 ]
 
 export function CandidateSidebar() {
+  const navigate = useNavigate()
+  const logout = () => {
+    localStorage.removeItem('candidate_auth')
+    localStorage.removeItem('candidate_application_draft')
+    navigate('/login')
+  }
+
   return (
     <aside id="candidate-sidebar" aria-label="Candidate sidebar" className="hidden w-72 shrink-0 border-r border-slate-200 bg-slate-50 lg:block">
       <div className="flex h-full flex-col p-5">
@@ -50,7 +58,7 @@ export function CandidateSidebar() {
           <p className="text-sm text-slate-700">Your payment has been successfully completed.</p>
         </div>
 
-        <button type="button" aria-label="Logout" className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+        <button type="button" aria-label="Logout" onClick={logout} className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
           <LogOut className="h-4 w-4" aria-hidden />
           <span>Logout</span>
         </button>

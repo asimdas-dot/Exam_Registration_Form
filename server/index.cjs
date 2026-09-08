@@ -13,6 +13,7 @@ app.use(cors())
 const DEFAULT_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017'
 const DB_NAME = process.env.MONGO_DB || 'exam_registration_db'
 const COLLECTION = 'candidates'
+const APPLICATIONS_COLLECTION = 'applications'
 
 let client
 let db
@@ -40,6 +41,41 @@ app.get('/api/candidates', async (req, res) => {
     await connect()
     const list = await db.collection(COLLECTION).find({}).toArray()
     res.json(list)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: String(e) })
+  }
+})
+
+app.get('/api/candidates/:applicationNumber', async (req, res) => {
+  try {
+    await connect()
+    const candidate = await db.collection(COLLECTION).findOne({
+      applicationNumber: req.params.applicationNumber,
+    })
+
+    app.put('/api/candidates/:applicationNumber', async (req, res) => {
+      try {
+        await connect()
+        const updates = { ...req.body }
+        delete updates._id
+        delete updates.password
+        const result = await db.collection(COLLECTION).findOneAndUpdate(
+          { applicationNumber: req.params.applicationNumber },
+          { $set: { ...updates, updatedAt: new Date().toISOString() } },
+          { returnDocument: 'after' },
+        )
+        if (!result) return res.status(404).json({ error: 'Candidate not found' })
+        const { password: _password, ...safeCandidate } = result
+        res.json(safeCandidate)
+      } catch (e) {
+        console.error(e)
+        res.status(500).json({ error: String(e) })
+      }
+    })
+    if (!candidate) return res.status(404).json({ error: 'Candidate not found' })
+    const { password: _password, ...safeCandidate } = candidate
+    res.json(safeCandidate)
   } catch (e) {
     console.error(e)
     res.status(500).json({ error: String(e) })
@@ -78,11 +114,44 @@ app.post('/api/candidates', async (req, res) => {
   }
 })
 
+// Candidate login by application number or email and password.
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { identifier, password } = req.body || {}
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Application number/email and password are required' })
+    }
+    await connect()
+    const candidate = await db.collection(COLLECTION).findOne({
+      $or: [{ applicationNumber: identifier }, { email: identifier.toLowerCase() }],
+      password,
+    })
+    if (!candidate) return res.status(401).json({ error: 'Invalid application number/email or password' })
+    const { password: _password, ...safeCandidate } = candidate
+    res.json({ ok: true, candidate: safeCandidate })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: String(e) })
+  }
+})
+
 // Clear candidates collection
 app.delete('/api/candidates', async (req, res) => {
   try {
     await connect()
     const r = await db.collection(COLLECTION).deleteMany({})
+    res.json({ deleted: r.deletedCount })
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: String(e) })
+  }
+})
+
+// Clear applications collection when application records are enabled.
+app.delete('/api/applications', async (req, res) => {
+  try {
+    await connect()
+    const r = await db.collection(APPLICATIONS_COLLECTION).deleteMany({})
     res.json({ deleted: r.deletedCount })
   } catch (e) {
     console.error(e)

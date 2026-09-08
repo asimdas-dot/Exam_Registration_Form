@@ -86,6 +86,11 @@ export const mockAdminService = {
     }
     return changed
   },
+  clearApplications: () => {
+    applications = []
+    persist()
+    listeners.forEach((l) => l())
+  },
   // New: list uploaded documents (scans localStorage keys starting with 'doc_upload_')
   getUploadedDocuments: () => {
     try {

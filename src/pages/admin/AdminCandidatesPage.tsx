@@ -24,16 +24,10 @@ export const AdminCandidatesPage: React.FC = () => {
       const res = await fetch(`${apiBase}/api/candidates`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      if (Array.isArray(data) && data.length) {
-        setItems(data)
-      } else {
-        // fallback to mock if backend empty
-        setItems(mockAdminService.getCandidates())
-      }
+      setItems(Array.isArray(data) ? data : [])
     } catch (e: any) {
       setBackendError(String(e))
-      // fallback to mock data on error
-      setItems(mockAdminService.getCandidates())
+      setItems([])
     } finally {
       setLoadingBackend(false)
     }
@@ -138,6 +132,31 @@ export const AdminCandidatesPage: React.FC = () => {
                 disabled={loadingBackend}
               >
                 {loadingBackend ? 'Refreshing...' : 'Refresh from backend'}
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!confirm('Clear all candidates from MongoDB? This action cannot be undone.')) return
+                  setMigrationStatus('working')
+                  setMigrationMessage('')
+                  try {
+                    const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:4000'
+                    const response = await fetch(`${apiBase}/api/candidates`, { method: 'DELETE' })
+                    const result = await response.json()
+                    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`)
+                    setItems([])
+                    setPage(1)
+                    setMigrationStatus('success')
+                    setMigrationMessage(`Cleared ${result.deleted || 0} candidates`)
+                  } catch (e: any) {
+                    setMigrationStatus('error')
+                    setMigrationMessage(String(e))
+                  }
+                }}
+                className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+                disabled={migrationStatus === 'working'}
+              >
+                Clear all candidates
               </button>
 
               <div className="text-sm text-slate-600">

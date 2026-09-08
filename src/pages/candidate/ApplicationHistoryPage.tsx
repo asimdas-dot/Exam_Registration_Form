@@ -1,9 +1,26 @@
 import { Check, Clock3 } from 'lucide-react'
 import { CandidateHeader } from '../../components/candidate/CandidateHeader'
 import { CandidateSidebar } from '../../components/candidate/CandidateSidebar'
-import { applicationHistory } from '../../mock/candidate/applicationData'
+import { useState } from 'react'
+import { useEffect } from 'react'
 
 export function ApplicationHistoryPage() {
+  const [candidate, setCandidate] = useState<any>(null)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('candidate_auth')
+      if (raw) setCandidate(JSON.parse(raw))
+    } catch (error) {
+      console.warn('Unable to load candidate history', error)
+    }
+  }, [])
+  const created = candidate?.registrationDate ? new Date(candidate.registrationDate).toLocaleDateString() : ''
+  const applicationHistory = [
+    { date: created, event: 'Registration Created', status: 'done' },
+    { date: created, event: 'Application Submitted', status: candidate ? 'done' : 'pending' },
+    { date: candidate?.updatedAt ? new Date(candidate.updatedAt).toLocaleDateString() : '', event: 'Application Updated', status: candidate?.updatedAt ? 'done' : 'pending' },
+  ]
+
   return (
     <div className="min-h-screen bg-slate-50">
       <CandidateHeader />

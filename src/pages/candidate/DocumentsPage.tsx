@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
 import { CandidateHeader } from '../../components/candidate/CandidateHeader'
 import { CandidateSidebar } from '../../components/candidate/CandidateSidebar'
@@ -8,7 +10,13 @@ import { candidateProfile } from '../../mock/candidate/dashboardData'
 import { realtimeService } from '../../services/realtimeService'
 
 export function DocumentsPage() {
-  const app = candidateProfile.applicationNumber
+  const app = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('candidate_auth') || '{}').applicationNumber || candidateProfile.applicationNumber
+    } catch {
+      return candidateProfile.applicationNumber
+    }
+  })()
   const [_tick, setTick] = useState(0)
 
   useEffect(() => {
@@ -65,6 +73,12 @@ export function DocumentsPage() {
                   </div>
                 </Card>
               ))}
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <Link to="/candidate/payment">
+                <Button>Continue to Payment</Button>
+              </Link>
             </div>
           </div>
         </main>

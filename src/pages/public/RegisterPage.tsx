@@ -137,6 +137,7 @@ export function RegisterPage() {
         name: values.fullName,
         email: values.email,
         mobile: values.mobileNumber,
+        password: values.password,
         personal: {
           fullName: values.fullName,
           dateOfBirth: values.dateOfBirth,
@@ -170,12 +171,10 @@ export function RegisterPage() {
         } catch (e) {
           // ignore
         }
+        localStorage.setItem('last_registration', JSON.stringify({ applicationNumber: appNumber, email: values.email }))
         navigate('/registration-success')
       } catch (e) {
-        // fallback to local behavior in case backend is unreachable
         console.error('Registration failed to save to backend:', e)
-        // still navigate so user proceeds; consider showing an error/toast
-        navigate('/registration-success')
       }
     }
   }

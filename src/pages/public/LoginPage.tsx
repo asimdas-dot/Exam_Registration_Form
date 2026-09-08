@@ -3,8 +3,39 @@ import { Link } from 'react-router-dom'
 import { Button } from '../../components/common/Button'
 import { Input } from '../../components/common/Input'
 import { PublicLayout } from '../../components/public/PublicLayout'
+import { useState } from 'react'
+import type { FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function LoginPage() {
+  const navigate = useNavigate()
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:4000'
+      const response = await fetch(`${apiBase}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: identifier.trim(), password }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Login failed')
+      localStorage.setItem('candidate_auth', JSON.stringify(result.candidate))
+      navigate('/candidate/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to login')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <PublicLayout hideNav>
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -20,9 +51,10 @@ export function LoginPage() {
               </div>
             </div>
 
-            <form className="space-y-5">
-              <Input label="Application Number / Email" placeholder="EXAM20260001234 or candidate@example.com" />
-              <Input label="Password" type="password" placeholder="Enter your password" />
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              <Input label="Application Number / Email" placeholder="EXAM20260001234 or candidate@example.com" value={identifier} onChange={(event) => setIdentifier(event.target.value)} />
+              <Input label="Password" type="password" placeholder="Enter your password" value={password} onChange={(event) => setPassword(event.target.value)} />
+              {error ? <p className="text-sm font-medium text-danger-600" role="alert">{error}</p> : null}
 
               <div className="flex flex-col justify-between gap-3 text-sm text-slate-600 sm:flex-row">
                 <label className="flex items-center gap-2">
@@ -32,7 +64,7 @@ export function LoginPage() {
                 <Link to="/forgot-password" className="font-medium text-primary-700 hover:text-primary-800">Forgot Password?</Link>
               </div>
 
-              <Button type="submit" size="lg" className="w-full">Login</Button>
+              <Button type="submit" size="lg" className="w-full" disabled={loading}>{loading ? 'Signing in...' : 'Login'}</Button>
 
               <p className="text-center text-sm text-slate-600">
                 New Candidate?{' '}

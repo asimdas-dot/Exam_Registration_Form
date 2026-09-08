@@ -116,11 +116,6 @@ export function DocumentCard({ doc, applicationNumber, onChange }: DocumentCardP
           </div>
         </div>
 
-        <div>
-          <span className={['inline-flex rounded-full px-2 py-1 text-xs font-medium', doc.status === 'approved' ? 'bg-success-100 text-success-700' : doc.status === 'rejected' ? 'bg-danger-100 text-danger-700' : 'bg-slate-100 text-slate-600'].join(' ')}>
-            {doc.status === 'approved' ? 'Approved' : doc.status === 'rejected' ? 'Rejected' : 'Pending'}
-          </span>
-        </div>
       </div>
 
       <div

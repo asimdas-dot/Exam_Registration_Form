@@ -26,6 +26,12 @@ export function PaymentSuccessPage() {
   const { state } = useLocation() as any
   const transactionId = state?.transactionId ?? 'TXN202608130999'
   const amount = state?.amount ?? 520
+  let applicationNumber = 'Unavailable'
+  try {
+    applicationNumber = JSON.parse(localStorage.getItem('candidate_auth') || '{}').applicationNumber || applicationNumber
+  } catch {
+    // Keep the fallback label when no candidate session is available.
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -39,7 +45,8 @@ export function PaymentSuccessPage() {
               <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-success-50 text-success-700">
                 <CheckCircle2 className="h-10 w-10" />
               </div>
-              <h1 className="mt-6 text-3xl font-semibold text-slate-900 sm:text-4xl">Payment Successful</h1>
+              <h1 className="mt-6 text-3xl font-semibold text-slate-900 sm:text-4xl">Application Successfully Completed</h1>
+              <p className="mt-3 text-slate-600">Your documents and payment have been submitted successfully.</p>
 
               <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left">
                 <div className="grid gap-3">
@@ -49,7 +56,7 @@ export function PaymentSuccessPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-600">Application Number</span>
-                    <span className="font-medium text-slate-900">EXAM20260001234</span>
+                    <span className="font-medium text-slate-900">{applicationNumber}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-600">Amount</span>

@@ -1,4 +1,6 @@
 import { useForm } from 'react-hook-form'
+import { useEffect } from 'react'
+import type { SelectHTMLAttributes } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/common/Button'
 import { Card } from '../../components/common/Card'
@@ -28,9 +30,97 @@ const defaultValues = {
 
 export function ApplicationPage() {
   const navigate = useNavigate()
-  const { register, handleSubmit } = useForm({ defaultValues })
+  const { register, handleSubmit, reset } = useForm({ defaultValues })
 
-  const onSubmit = () => {
+  useEffect(() => {
+    async function loadCandidate() {
+      const raw = localStorage.getItem('candidate_auth')
+      if (!raw) return
+      try {
+        let candidate = JSON.parse(raw)
+        if (candidate.applicationNumber) {
+          const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:4000'
+          const response = await fetch(`${apiBase}/api/candidates/${encodeURIComponent(candidate.applicationNumber)}`)
+          if (response.ok) {
+            candidate = await response.json()
+            localStorage.setItem('candidate_auth', JSON.stringify(candidate))
+          }
+        }
+      const personal = candidate.personal || {}
+      const address = candidate.address || {}
+      const fields: Record<string, string> = {
+        fullName: personal.fullName || candidate.name || '',
+        dateOfBirth: personal.dateOfBirth || '',
+        gender: personal.gender || '',
+        fatherName: personal.fatherName || '',
+        motherName: personal.motherName || '',
+        mobileNumber: (candidate.mobile || '').replace('+91 ', ''),
+        email: candidate.email || '',
+        address: address.address || '',
+        state: address.state || '',
+        district: address.district || '',
+        city: address.city || '',
+        pinCode: address.pinCode || '',
+        examName: candidate.exam?.examName || '',
+        category: candidate.exam?.category || '',
+        qualification: candidate.exam?.qualification || '',
+        preferredCentre: candidate.exam?.preferredCentre || '',
+      }
+      reset({ ...defaultValues, ...fields })
+      } catch (error) {
+        console.warn('Unable to load candidate application details', error)
+      }
+    }
+    void loadCandidate()
+  }, [])
+
+  const onSubmit = async (values: typeof defaultValues) => {
+    const raw = localStorage.getItem('candidate_auth')
+    if (raw) {
+      try {
+        const candidate = JSON.parse(raw)
+        const updatedCandidate = {
+          ...candidate,
+          name: values.fullName,
+          email: values.email,
+          mobile: values.mobileNumber,
+          personal: {
+            fullName: values.fullName,
+            dateOfBirth: values.dateOfBirth,
+            gender: values.gender,
+            fatherName: values.fatherName,
+            motherName: values.motherName,
+          },
+          address: {
+            address: values.address,
+            state: values.state,
+            district: values.district,
+            city: values.city,
+            pinCode: values.pinCode,
+          },
+          exam: {
+            examName: values.examName,
+            category: values.category,
+            qualification: values.qualification,
+            preferredCentre: values.preferredCentre,
+          },
+        }
+        localStorage.setItem('candidate_application_draft', JSON.stringify(updatedCandidate))
+        const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:4000'
+        const response = await fetch(`${apiBase}/api/candidates/${encodeURIComponent(candidate.applicationNumber)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedCandidate),
+        })
+        if (response.ok) {
+          localStorage.setItem('candidate_auth', JSON.stringify(await response.json()))
+        } else {
+          localStorage.setItem('candidate_auth', JSON.stringify(updatedCandidate))
+        }
+      } catch (error) {
+        console.warn('Unable to save application details before review', error)
+      }
+    }
     navigate('/candidate/application/review')
   }
 
@@ -92,10 +182,37 @@ export function ApplicationPage() {
               <Card className="p-5 sm:p-6">
                 <h2 className="mb-5 text-xl font-semibold text-slate-900">Examination Details</h2>
                 <div className="grid gap-5 md:grid-cols-2">
-                  <Input label="Exam Name" {...register('examName')} />
-                  <Input label="Category" {...register('category')} />
-                  <Input label="Qualification" {...register('qualification')} />
-                  <Input label="Exam Centre Preference" {...register('preferredCentre')} />
+                  <SelectField label="Exam Name" {...register('examName')}>
+                    <option value="">Select exam</option>
+                    <option value="Government Recruitment Examination 2026">Government Recruitment Examination 2026</option>
+                    <option value="State Eligibility Examination 2026">State Eligibility Examination 2026</option>
+                    <option value="Graduate Entrance Examination 2026">Graduate Entrance Examination 2026</option>
+                  </SelectField>
+                  <SelectField label="Category" {...register('category')}>
+                    <option value="">Select category</option>
+                    <option value="General">General</option>
+                    <option value="OBC">OBC</option>
+                    <option value="SC">SC</option>
+                    <option value="ST">ST</option>
+                    <option value="EWS">EWS</option>
+                  </SelectField>
+                  <SelectField label="Qualification" {...register('qualification')}>
+                    <option value="">Select qualification</option>
+                    <option value="10th Pass">10th Pass</option>
+                    <option value="12th Pass">12th Pass</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="B.A.">B.A.</option>
+                    <option value="B.Sc.">B.Sc.</option>
+                    <option value="B.Tech.">B.Tech.</option>
+                    <option value="Postgraduate">Postgraduate</option>
+                  </SelectField>
+                  <SelectField label="Exam Centre Preference" {...register('preferredCentre')}>
+                    <option value="">Select exam centre</option>
+                    <option value="ABC Examination Centre, Kolkata">ABC Examination Centre, Kolkata</option>
+                    <option value="Government College Centre, Kolkata">Government College Centre, Kolkata</option>
+                    <option value="City Examination Centre, Howrah">City Examination Centre, Howrah</option>
+                    <option value="District Examination Centre, Durgapur">District Examination Centre, Durgapur</option>
+                  </SelectField>
                 </div>
               </Card>
 
@@ -110,3 +227,15 @@ export function ApplicationPage() {
     </div>
   )
 }
+
+const SelectField = ({ label, children, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { label: string }) => (
+  <label className="block">
+    <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
+    <select
+      {...props}
+      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-primary-300 focus:ring-4 focus:ring-primary-100"
+    >
+      {children}
+    </select>
+  </label>
+)

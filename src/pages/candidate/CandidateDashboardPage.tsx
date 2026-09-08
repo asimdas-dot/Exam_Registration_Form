@@ -5,18 +5,22 @@ import { Card } from '../../components/common/Card'
 import { StatusBadge } from '../../components/common/StatusBadge'
 import { CandidateHeader } from '../../components/candidate/CandidateHeader'
 import { CandidateSidebar } from '../../components/candidate/CandidateSidebar'
-import { candidateProfile, notifications, progressSteps, quickActions } from '../../mock/candidate/dashboardData'
+import { notifications, progressSteps, quickActions } from '../../mock/candidate/dashboardData'
 import { useEffect, useState } from 'react'
 import { realtimeService } from '../../services/realtimeService'
 
 export function CandidateDashboardPage() {
-  const [status, setStatus] = useState(candidateProfile.status)
-  const [lastUpdated, setLastUpdated] = useState(candidateProfile.lastUpdated)
+  const [candidate, setCandidate] = useState<any>(() => {
+    try { return JSON.parse(localStorage.getItem('candidate_auth') || '{}') } catch { return {} }
+  })
+  const applicationNumber = candidate.applicationNumber || ''
+  const [status, setStatus] = useState(candidate.status || 'UNDER_VERIFICATION')
+  const [lastUpdated, setLastUpdated] = useState(candidate.updatedAt || candidate.registrationDate || '')
   const [uploadedCount, setUploadedCount] = useState(() => {
     try {
       let c = 0
       // count doc_upload_ keys for this application
-      const prefix = `doc_upload_${candidateProfile.applicationNumber}_`
+      const prefix = `doc_upload_${applicationNumber}_`
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i)
         if (k && k.startsWith(prefix)) c++
@@ -28,11 +32,27 @@ export function CandidateDashboardPage() {
   })
 
   useEffect(() => {
+    async function refreshCandidate() {
+      if (!applicationNumber) return
+      try {
+        const apiBase = (import.meta as any).env?.VITE_API_BASE || 'http://localhost:4000'
+        const response = await fetch(`${apiBase}/api/candidates/${encodeURIComponent(applicationNumber)}`)
+        if (response.ok) {
+          const latest = await response.json()
+          setCandidate(latest)
+          setStatus(latest.status || 'UNDER_VERIFICATION')
+          setLastUpdated(latest.updatedAt || latest.registrationDate || '')
+        }
+      } catch (error) {
+        console.warn('Unable to refresh dashboard candidate details', error)
+      }
+    }
+    void refreshCandidate()
     const unsub = realtimeService.subscribe((m) => {
       if (!m || !m.type) return
       if (m.type === 'application:status' || m.type === 'application:bulk_status') {
         const payload = m.payload || {}
-        if (payload.applicationNumber === candidateProfile.applicationNumber) {
+        if (payload.applicationNumber === applicationNumber) {
           setStatus(payload.status || status)
           setLastUpdated(new Date().toISOString())
         }
@@ -40,7 +60,7 @@ export function CandidateDashboardPage() {
       if (m.type.startsWith('document:') || m.type === 'document:remark') {
         // recompute uploadedCount
         try {
-          const prefix = `doc_upload_${candidateProfile.applicationNumber}_`
+          const prefix = `doc_upload_${applicationNumber}_`
           let c = 0
           for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i)
@@ -51,7 +71,7 @@ export function CandidateDashboardPage() {
       }
     })
     return unsub
-  }, [])
+  }, [applicationNumber])
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -84,7 +104,7 @@ export function CandidateDashboardPage() {
                 <div className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div>
                     <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Application Number</p>
-                    <p className="mt-2 text-xl font-semibold text-slate-900">{candidateProfile.applicationNumber}</p>
+                    <p className="mt-2 text-xl font-semibold text-slate-900">{applicationNumber}</p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.12em] text-slate-500">Last Updated</p>
@@ -96,13 +116,13 @@ export function CandidateDashboardPage() {
               <Card className="p-6">
                 <div className="mb-5 flex items-center justify-between gap-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary-700">Profile</p>
-                  <span className="text-sm font-medium text-slate-500">{candidateProfile.name}</span>
+                  <span className="text-sm font-medium text-slate-500">{candidate.name}</span>
                 </div>
                 <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-700 text-xl font-semibold text-white">AD</div>
                   <div>
-                    <p className="text-lg font-semibold text-slate-900">{candidateProfile.name}</p>
-                    <p className="text-sm text-slate-500">Application ID: {candidateProfile.applicationNumber}</p>
+                    <p className="text-lg font-semibold text-slate-900">{candidate.name}</p>
+                    <p className="text-sm text-slate-500">Application ID: {applicationNumber}</p>
                   </div>
                 </div>
               </Card>
