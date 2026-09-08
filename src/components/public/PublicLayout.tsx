@@ -36,9 +36,14 @@ export function PublicLayout({ children, hideNav = false }: PublicLayoutProps) {
             <button type="button" className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 md:hidden" aria-label="Open navigation menu">
               <Menu className="h-4 w-4" />
             </button>
-            <Link to="/login">
-              <Button size="sm" variant="primary">Login</Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/login">
+                <Button size="sm" variant="primary">Candidate Login</Button>
+              </Link>
+              <Link to="/admin/login">
+                <Button size="sm" variant="outline">Admin Login</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
