@@ -18,12 +18,13 @@ export default defineConfig({
   use: {
     headless: true,
     viewport: { width: 1280, height: 720 },
-    actionTimeout: 5 * 1000,
+    actionTimeout: 5000,
     ignoreHTTPSErrors: true,
+    video: 'retain-on-failure',
 
     baseURL:
       process.env.TEST_BASE_URL ||
-      'http://127.0.0.1:4173/Exam_Registration_Form/',
+      'http://127.0.0.1:4173',
   },
 
   projects: [
@@ -40,7 +41,7 @@ export default defineConfig({
     : {
         webServer: {
           command: 'npm run build && npm run preview -- --port 4173',
-          url: 'http://127.0.0.1:4173/Exam_Registration_Form/',
+          url: 'http://127.0.0.1:4173',
           timeout: 10 * 60 * 1000,
           reuseExistingServer: true,
         },
